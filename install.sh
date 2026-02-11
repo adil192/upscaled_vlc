@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+set -e
 
 SYMLINK=0
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
@@ -10,6 +11,28 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
   exit 0
 elif [ "$1" = "-s" ] || [ "$1" = "--symlink" ]; then
   SYMLINK=1
+fi
+
+if ! command -v ffprobe   >/dev/null 2>&1 ||
+   ! command -v gamescope >/dev/null 2>&1 ||
+   ! command -v xdpyinfo  >/dev/null 2>&1 ||
+   ! command -v vlc       >/dev/null 2>&1; then
+
+  echo "Some dependencies are missing, installing them now..."
+
+  if command -v apt >/dev/null 2>&1; then
+    sudo apt install -y ffmpeg gamescope x11-utils vlc
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y ffmpeg gamescope xdpyinfo vlc
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -Sy --needed ffmpeg gamescope xorg-xdpyinfo vlc
+  elif command -v zypper >/dev/null 2>&1; then
+    sudo zypper install -y ffmpeg gamescope xdpyinfo vlc
+  else
+    echo "Unrecognized package manager."
+    echo "Please install these yourself: ffmpeg gamescope xdpyinfo vlc"
+    exit 1
+  fi
 fi
 
 PROJECT_DIR=$(pwd)
