@@ -52,6 +52,13 @@ function check_dependencies() {
   fi
 }
 
+# gamescope may have issues with Nvidia GPUs, and needs to use the sdl backend.
+# This might no longer be the case, but I don't use Nvidia anymore so can't test.
+# Returns 0 (true) if an Nvidia GPU is detected, 1 (false) otherwise.
+function has_nvidia_gpu() {
+  lspci | grep -Ei 'VGA|3D|2D' | grep -qi nvidia
+}
+
 check_args "$@"
 check_dependencies
 
@@ -96,12 +103,17 @@ elif [ $(echo "$VIDEO_ASPECT_RATIO < $SCREEN_ASPECT_RATIO" | bc) -eq 1 ]; then
   echo "Adjusted video resolution: ${VIDEO_WIDTH}x${VIDEO_HEIGHT}"
 fi
 
+BACKEND_ARG=""
+if has_nvidia_gpu; then
+  BACKEND_ARG="--backend sdl"
+fi
+
 if [ $VIDEO_WIDTH -lt $SCREEN_WIDTH ] || [ $VIDEO_HEIGHT -lt $SCREEN_HEIGHT ]; then
   echo "Enabling upscaling..."
   gamescope \
     -w "$VIDEO_WIDTH" -h "$VIDEO_HEIGHT" \
     -W "$SCREEN_WIDTH" -H "$SCREEN_HEIGHT" \
-    --backend sdl \
+    ${BACKEND_ARG} \
     -F fsr \
     -f \
     -- vlc -f "$VIDEO_FILE"
